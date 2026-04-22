@@ -1,6 +1,6 @@
 [project]
 name = "red-team-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "MCP server exposing adversarial review, devil's advocate, and red-team code review via any OpenAI-compatible text backend (codex-proxy, OpenAI, OpenRouter, local LLM, etc.)"
 readme = "README.md"
 license = { text = "MIT" }

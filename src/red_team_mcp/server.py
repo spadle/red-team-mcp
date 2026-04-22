@@ -103,8 +103,58 @@ def red_team_code(
     return _call(RED_TEAM_CODE, payload)
 
 
+def _run_install() -> int:
+    """One-time managed-mode setup: clone codex-proxy, npm install, build web UI,
+    seed a random bearer token, spawn, print the login URL."""
+    import sys as _sys
+
+    from .bootstrap import get_lifecycle
+
+    lc = get_lifecycle()
+    print("[red-team-mcp] installing codex-proxy backend (first run takes ~5 min)...", file=_sys.stderr)
+    ok, err = lc.install()
+    if not ok:
+        print(err, file=_sys.stderr)
+        return 1
+    print("[red-team-mcp] install complete. starting codex-proxy...", file=_sys.stderr)
+    ok, err = lc.ensure_running()
+    if not ok:
+        print(err, file=_sys.stderr)
+        return 1
+    print(
+        f"[red-team-mcp] codex-proxy is running at http://localhost:{lc.port}/\n"
+        f"[red-team-mcp] open that URL in a browser and log in with your ChatGPT account.\n"
+        f"[red-team-mcp] then add the MCP server to your client (see README). you are done.",
+        file=_sys.stderr,
+    )
+    return 0
+
+
 def main() -> None:
     """Entry point registered by pyproject.toml [project.scripts]."""
+    import sys as _sys
+
+    if len(_sys.argv) > 1:
+        cmd = _sys.argv[1]
+        if cmd in ("install", "setup"):
+            _sys.exit(_run_install())
+        if cmd in ("-h", "--help", "help"):
+            print(
+                "red-team-mcp — MCP server with three contrarian tools.\n\n"
+                "Usage:\n"
+                "  red-team-mcp             # run the MCP server (stdio)\n"
+                "  red-team-mcp install     # one-time: clone + build codex-proxy, generate key, start it\n"
+                "\n"
+                "Env vars:\n"
+                "  CODEX_PROXY_URL   default http://localhost:8080/v1 (set to point elsewhere)\n"
+                "  CODEX_PROXY_KEY   auto-loaded from ~/.red-team-mcp/proxy.key after `install`\n"
+                "  CODEX_MODEL       default gpt-5.4\n"
+                "  CODEX_PROXY_AUTO  default true; set false to disable managed auto-start\n"
+                "  RED_TEAM_MCP_HOME default ~/.red-team-mcp/\n",
+                file=_sys.stderr,
+            )
+            _sys.exit(0)
+
     mcp.run()
 
 
